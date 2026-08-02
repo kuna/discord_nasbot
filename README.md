@@ -39,6 +39,23 @@ class PingDispatcher(DiscordCommandDispatcher):
 
 Leave `channel` unset to allow the command in every channel.
 
+Declare the handler as `async def handler(self, ctx, *args)` to receive the command
+arguments (space-split, quoted strings kept together):
+```py
+# example: plugins/echo/handler.py
+# `!echo hello world` -> the bot replies: You typed "hello world"
+
+from botcmd.dispatcher import DiscordCommandDispatcher
+
+class EchoDispatcher(DiscordCommandDispatcher):
+    command = "echo"
+
+    async def handler(self, ctx, *args):
+        await ctx.send(f'You typed "{" ".join(args)}"')
+```
+
+A handler declared as `async def handler(self, ctx)` simply ignores any arguments.
+
 ### Add a private plugin
 
 For putting a private plugin, put the plugin under `plugins_priv/` folder. This won't be tracked by git.

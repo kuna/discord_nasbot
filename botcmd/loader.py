@@ -18,9 +18,23 @@ def _make_channel_check(channels):
 
 
 def _make_callback(instance):
-    # discord.py rejects bound methods as command callbacks, so wrap in a plain function
-    async def callback(ctx):
-        await instance.handler(ctx)
+    # discord.py rejects bound methods as command callbacks, so wrap in a plain function.
+    # discord.py parses command arguments from the callback signature, so only expose
+    # *args when the handler actually accepts them.
+    accepts_args = any(
+        p.kind is inspect.Parameter.VAR_POSITIONAL
+        for p in inspect.signature(instance.handler).parameters.values()
+    )
+
+    if accepts_args:
+
+        async def callback(ctx, *args):
+            await instance.handler(ctx, *args)
+
+    else:
+
+        async def callback(ctx):
+            await instance.handler(ctx)
 
     callback.__doc__ = instance.handler.__doc__
     return callback
