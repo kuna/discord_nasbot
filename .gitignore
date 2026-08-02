@@ -1,0 +1,9 @@
+# caches
+__pycache__
+
+# temp files
+.swp
+
+# credentials
+.env
+
