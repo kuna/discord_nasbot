@@ -47,6 +47,34 @@ For putting a private plugin, put the plugin under `plugins_priv/` folder. This 
 
 Just putting a plugin will be fine.
 
+### Testing a plugin
+
+Put a `test_handler.py` next to the plugin's `handler.py`. Use `load_plugin_handler` to
+import the handler under test:
+```py
+# example: plugins/ping/test_handler.py
+
+from types import SimpleNamespace
+
+from botcmd.testing import load_plugin_handler
+
+handler = load_plugin_handler(__file__)
+
+
+async def test_ping():
+    sent = []
+
+    async def send(msg):
+        sent.append(msg)
+
+    dispatcher = handler.PingDispatcher(SimpleNamespace(latency=0.123))
+    await dispatcher.handler(SimpleNamespace(send=send))
+    assert sent == ["🏓 Pong! 123ms"]
+```
+
+`uv run pytest` collects every plugin's tests (including `plugins_priv/`) together with
+the framework tests under `tests/`. Async test functions work out of the box.
+
 ### Disabling a plugin
 
 Add a environment variable `DISABLED_PLUGINS=` in `.env` file like following:
@@ -56,8 +84,11 @@ DISABLED_PLUGINS=bot,downloader
 
 ## Development
 
-Lint and format with [ruff](https://docs.astral.sh/ruff/):
+Lint and format with [ruff](https://docs.astral.sh/ruff/), run tests with pytest:
 ```
 uv run ruff check .
 uv run ruff format .
+uv run pytest
 ```
+
+CI runs all of the above on every push and pull request.

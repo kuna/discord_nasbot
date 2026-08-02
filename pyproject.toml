@@ -13,8 +13,18 @@ run-bot = "main:main"
 
 [dependency-groups]
 dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
     "ruff>=0.16.1",
 ]
+
+[tool.pytest.ini_options]
+# "plugins*" also picks up plugins_priv/ when it exists
+testpaths = ["tests", "plugins*"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+# importlib mode lets every plugin have its own test_handler.py without name collisions
+addopts = "--import-mode=importlib"
 
 [tool.ruff]
 line-length = 100

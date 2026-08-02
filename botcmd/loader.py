@@ -55,14 +55,14 @@ def _register_dispatchers(bot, module):
     return registered
 
 
-def load_plugins(bot, disabled_plugins=None):
-    """Discover and register plugins from PLUGIN_DIRS.
+def load_plugins(bot, disabled_plugins=None, root=None):
+    """Discover and register plugins from PLUGIN_DIRS under root (default: repo root).
 
     disabled_plugins is a comma-separated string of plugin folder names to skip.
     Returns the list of loaded plugin names.
     """
     disabled = {p.strip() for p in (disabled_plugins or "").split(",") if p.strip()}
-    root = Path(__file__).resolve().parent.parent
+    root = Path(root) if root else Path(__file__).resolve().parent.parent
     loaded = []
     for base in PLUGIN_DIRS:
         base_dir = root / base
