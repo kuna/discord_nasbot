@@ -13,8 +13,8 @@ class WebProxy(Web):
     path, enable it in the proxy (SpoofDPI: --dns-mode https).
     """
 
-    def __init__(self, proxy_host, proxy_port=None, doh_url=None):
+    def __init__(self, proxy_host, proxy_port=None, doh_url=None, headers=None):
         proxy = proxy_host if "://" in proxy_host else f"http://{proxy_host}"
         if proxy_port:
             proxy = f"{proxy}:{proxy_port}"
-        super().__init__(doh_url=doh_url, proxy=proxy)
+        super().__init__(doh_url=doh_url, proxy=proxy, headers=headers)

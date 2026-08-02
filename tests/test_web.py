@@ -6,20 +6,23 @@ from aiohttp import web as aioweb
 from aiohttp.test_utils import TestServer
 
 from utils.doh import DoHResolver
-from utils.web import Web
+from utils.web import BROWSER_HEADERS, Web
 from utils.webproxy import WebProxy
 
 
 @pytest.fixture
 async def server():
     app = aioweb.Application()
+    received = []
 
     async def endpoint(request):
+        received.append(dict(request.headers))
         return aioweb.Response(text=f"content of {request.match_info['name']}")
 
     app.router.add_get("/{name}", endpoint)
     server = TestServer(app)
     await server.start_server()
+    server.received_headers = received
     yield server
     await server.close()
 
@@ -72,6 +75,55 @@ def test_webproxy_builds_proxy_url():
 
 def test_plain_web_has_no_proxy():
     assert Web()._proxy is None
+
+
+async def test_read_sends_browser_headers(server):
+    await Web().read(str(server.make_url("/hello.txt")))
+
+    headers = server.received_headers[0]
+    assert headers["User-Agent"] == BROWSER_HEADERS["User-Agent"]
+    assert "aiohttp" not in headers["User-Agent"]
+    assert "Python" not in headers["User-Agent"]
+    assert headers["Sec-Fetch-Mode"] == "navigate"
+    assert headers["sec-ch-ua-platform"] == '"macOS"'
+
+
+async def test_download_sends_browser_headers(server, tmp_path):
+    await Web().download(tmp_path / "hello.txt", str(server.make_url("/hello.txt")))
+
+    assert server.received_headers[0]["User-Agent"] == BROWSER_HEADERS["User-Agent"]
+
+
+async def test_archive_sends_browser_headers(server, tmp_path):
+    await Web().archive(tmp_path / "b.zip", [str(server.make_url("/a.txt"))])
+
+    assert server.received_headers[0]["User-Agent"] == BROWSER_HEADERS["User-Agent"]
+
+
+async def test_accept_encoding_is_left_to_aiohttp(server):
+    """aiohttp advertises only codecs it can decode, so we must not override it."""
+    assert "Accept-Encoding" not in BROWSER_HEADERS
+
+    await Web().read(str(server.make_url("/hello.txt")))
+
+    # aiohttp still sends one of its own
+    assert server.received_headers[0]["Accept-Encoding"]
+
+
+async def test_custom_headers_override_defaults(server):
+    web = Web(headers={"User-Agent": "custom-agent", "X-Extra": "1"})
+    await web.read(str(server.make_url("/hello.txt")))
+
+    headers = server.received_headers[0]
+    assert headers["User-Agent"] == "custom-agent"
+    assert headers["X-Extra"] == "1"
+    # untouched defaults survive
+    assert headers["Accept-Language"] == BROWSER_HEADERS["Accept-Language"]
+
+
+def test_webproxy_uses_browser_headers_too():
+    assert WebProxy("dpi.local")._headers == BROWSER_HEADERS
+    assert WebProxy("dpi.local", headers={"User-Agent": "x"})._headers["User-Agent"] == "x"
 
 
 def test_no_resolver_without_doh_url():

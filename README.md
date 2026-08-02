@@ -118,6 +118,10 @@ Every dispatcher receives the shared dependencies from `depend.py` as `self.dep`
   `PROXY_HOST` (and optionally `PROXY_PORT`) is set in `.env`
 * `self.dep.config` — the app config
 
+Both send desktop-Chrome request headers (`utils.web.BROWSER_HEADERS`) instead of
+aiohttp's default `Python/3.x aiohttp/3.y` User-Agent, so sites don't reject them as a
+crawler. Pass `headers={...}` to `Web`/`WebProxy` to add or override individual entries.
+
 Both resolve hostnames over DNS-over-HTTPS (`DOH_URL`, default
 `https://1.1.1.1/dns-query`); set `DOH_URL=off` to use the system resolver instead.
 For `webproxy` the DoH lookups are sent through the proxy as well, so they get the
