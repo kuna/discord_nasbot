@@ -1,0 +1,15 @@
+# credentials never belong in the image; pass them with --env-file at runtime
+.env
+
+.git
+.github
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+downloads
+Dockerfile
+.dockerignore
+docker-compose.yml

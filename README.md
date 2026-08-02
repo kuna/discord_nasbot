@@ -15,6 +15,38 @@ uv run python main.py
 
 In the discord channel, say `!ping`, then the bot will respond.
 
+## Deploy with Docker
+
+The image bundles [SpoofDPI](https://github.com/xvzc/SpoofDPI) as a local proxy, so
+`self.dep.webproxy` works out of the box — no proxy setup on the host.
+
+```
+docker compose up -d --build
+```
+
+or without compose:
+
+```
+make docker-build
+make docker-run
+```
+
+Credentials are never baked into the image; `.env` is passed at runtime
+(`--env-file .env` / compose `env_file`). Downloads are written to the `/data`
+volume, which compose maps to `./downloads`.
+
+Proxy behaviour is controlled by these variables:
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `SPOOFDPI_ENABLED` | `1` | start the bundled proxy and point the bot at it |
+| `SPOOFDPI_LISTEN_ADDR` | `127.0.0.1:8080` | address the bundled proxy listens on |
+| `SPOOFDPI_LOG_LEVEL` | `info` | spoofdpi log level |
+| `PROXY_HOST` / `PROXY_PORT` | the bundled proxy | set to use a different proxy instead |
+
+Set `SPOOFDPI_ENABLED=0` without `PROXY_HOST` to run with no proxy at all; the
+proxy-only commands then report `Proxy is not ready` instead of failing silently.
+
 ## Plugin
 
 This discord bot is extensible with plugins. Below is the usage.

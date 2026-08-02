@@ -1,0 +1,13 @@
+services:
+  nasbot:
+    build: .
+    image: discord-nasbot
+    container_name: discord-nasbot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DOWNLOAD_FOLDER: /data/downloads
+      # the bundled SpoofDPI proxy is used automatically; to disable it, set
+      # SPOOFDPI_ENABLED=0 (and optionally PROXY_HOST/PROXY_PORT for another proxy)
+    volumes:
+      - ./downloads:/data/downloads
