@@ -47,6 +47,7 @@ arguments (space-split, quoted strings kept together):
 
 from botcmd.dispatcher import DiscordCommandDispatcher
 
+
 class EchoDispatcher(DiscordCommandDispatcher):
     command = "echo"
 

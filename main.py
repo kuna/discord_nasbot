@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+from botcmd.errors import register_error_handler
 from botcmd.loader import load_plugins
 from config import load_config
 
@@ -19,6 +20,9 @@ def main():
     async def on_ready():
         print(f"Logged in as {bot.user.name} (ID: {bot.user.id})")
         print("------")
+
+    # 커맨드 실패 시 채널에 에러를 알림
+    register_error_handler(bot)
 
     # 플러그인 로드 및 커맨드 등록
     loaded = load_plugins(bot, config.DISABLED_PLUGINS)
