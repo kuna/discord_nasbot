@@ -10,4 +10,4 @@ docker-build:
 	docker build -t discord-nasbot .
 
 docker-run:
-	docker run --rm --env-file .env -v "$(PWD)/downloads:/data/downloads" discord-nasbot
+	docker run --rm --env-file .env -v "$(PWD)/downloads:/data/downloads" discord-nasbot:latest

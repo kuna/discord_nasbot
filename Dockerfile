@@ -67,6 +67,8 @@ COPY . .
 ENV DOWNLOAD_FOLDER=/data/downloads \
     SPOOFDPI_ENABLED=1 \
     SPOOFDPI_LISTEN_ADDR=127.0.0.1:8080 \
+    SPOOFDPI_DNS_MODE=https \
+    SPOOFDPI_DNS_HTTPS_URL=https://1.1.1.1/dns-query \
     SPOOFDPI_LOG_LEVEL=info
 
 RUN useradd --create-home --uid 1000 nasbot \

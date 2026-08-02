@@ -3,6 +3,8 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+from utils.doh import DEFAULT_DOH_URL
+
 
 @dataclass
 class Config:
@@ -11,6 +13,7 @@ class Config:
     PROXY_HOST: str
     PROXY_PORT: str
     DOWNLOAD_FOLDER: str
+    DOH_URL: str
 
 
 def _loadenv(name: str, required: bool = False):
@@ -28,4 +31,6 @@ def load_config():
         PROXY_HOST=_loadenv("PROXY_HOST"),
         PROXY_PORT=_loadenv("PROXY_PORT"),
         DOWNLOAD_FOLDER=_loadenv("DOWNLOAD_FOLDER") or "downloads",
+        # DNS-over-HTTPS endpoint; set DOH_URL=off to use the system resolver
+        DOH_URL=_loadenv("DOH_URL") or DEFAULT_DOH_URL,
     )

@@ -9,10 +9,13 @@ log() {
 if [ "${SPOOFDPI_ENABLED:-1}" = "1" ]; then
     listen_addr="${SPOOFDPI_LISTEN_ADDR:-127.0.0.1:8080}"
     log "starting spoofdpi on ${listen_addr}"
+    # the proxy resolves the target hostnames, so DoH has to be enabled here too
     # --no-tui: spoofdpi defaults to an interactive TUI, which needs a TTY
     spoofdpi \
         --no-tui \
         --listen-addr "${listen_addr}" \
+        --dns-mode "${SPOOFDPI_DNS_MODE:-https}" \
+        --dns-https-url "${SPOOFDPI_DNS_HTTPS_URL:-https://1.1.1.1/dns-query}" \
         --log-level "${SPOOFDPI_LOG_LEVEL:-info}" &
     spoofdpi_pid=$!
 

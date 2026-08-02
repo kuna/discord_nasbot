@@ -56,7 +56,13 @@ Proxy behaviour is controlled by these variables:
 | `SPOOFDPI_ENABLED` | `1` | start the bundled proxy and point the bot at it |
 | `SPOOFDPI_LISTEN_ADDR` | `127.0.0.1:8080` | address the bundled proxy listens on |
 | `SPOOFDPI_LOG_LEVEL` | `info` | spoofdpi log level |
+| `SPOOFDPI_DNS_MODE` | `https` | proxy-side DNS; `https` means DNS-over-HTTPS |
+| `SPOOFDPI_DNS_HTTPS_URL` | `https://1.1.1.1/dns-query` | proxy-side DoH endpoint |
 | `PROXY_HOST` / `PROXY_PORT` | the bundled proxy | set to use a different proxy instead |
+
+DNS-over-HTTPS is on at both layers: the bot resolves its own lookups over DoH
+(`DOH_URL`), and the proxy resolves the target hostnames over DoH
+(`SPOOFDPI_DNS_MODE=https`), so proxied traffic makes no plaintext DNS queries either.
 
 Set `SPOOFDPI_ENABLED=0` without `PROXY_HOST` to run with no proxy at all; the
 proxy-only commands then report `Proxy is not ready` instead of failing silently.
@@ -111,6 +117,12 @@ Every dispatcher receives the shared dependencies from `depend.py` as `self.dep`
 * `self.dep.webproxy` — same interface, but routed through the DPI proxy; `None` unless
   `PROXY_HOST` (and optionally `PROXY_PORT`) is set in `.env`
 * `self.dep.config` — the app config
+
+Both resolve hostnames over DNS-over-HTTPS (`DOH_URL`, default
+`https://1.1.1.1/dns-query`); set `DOH_URL=off` to use the system resolver instead.
+For `webproxy` the DoH lookups are sent through the proxy as well, so they get the
+same DPI treatment as the requests. Note that `webproxy` hands the target hostname to
+the proxy, which resolves it itself — see the Docker section for that setting.
 
 Working examples:
 

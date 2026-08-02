@@ -4,6 +4,8 @@ from urllib.parse import urlparse
 
 import aiohttp
 
+from utils.doh import DoHResolver
+
 CHUNK_SIZE = 1 << 16
 
 
@@ -12,14 +14,31 @@ def _filename_from_url(url, fallback):
 
 
 class Web:
-    """Plain web accessor. See utils.webproxy.WebProxy for the proxied variant."""
+    """Plain web accessor. See utils.webproxy.WebProxy for the proxied variant.
 
-    def __init__(self):
-        self._proxy = None
+    Pass doh_url to resolve hostnames over DNS-over-HTTPS instead of the system
+    resolver. When proxy is set, both the requests and the DoH lookups go
+    through it.
+    """
+
+    def __init__(self, doh_url=None, proxy=None):
+        self._proxy = proxy
+        self._resolver = DoHResolver(doh_url, proxy=proxy) if doh_url else None
+
+    def _session(self):
+        # the resolver is shared across sessions; aiohttp only closes a resolver
+        # it created itself, so closing a session leaves ours intact
+        connector = aiohttp.TCPConnector(resolver=self._resolver) if self._resolver else None
+        return aiohttp.ClientSession(connector=connector)
+
+    async def close(self):
+        """Release the DoH resolver's own connection, if any."""
+        if self._resolver:
+            await self._resolver.close()
 
     async def read(self, url):
         """Return the response body of url as text."""
-        async with aiohttp.ClientSession() as session:
+        async with self._session() as session:
             async with session.get(url, proxy=self._proxy) as resp:
                 resp.raise_for_status()
                 return await resp.text()
@@ -28,7 +47,7 @@ class Web:
         """Download url into the file at path (parent dirs are created). Returns the Path."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiohttp.ClientSession() as session:
+        async with self._session() as session:
             async with session.get(url, proxy=self._proxy) as resp:
                 resp.raise_for_status()
                 with path.open("wb") as f:
@@ -44,7 +63,7 @@ class Web:
         """
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiohttp.ClientSession() as session:
+        async with self._session() as session:
             with zipfile.ZipFile(path, "w") as zf:
                 seen = set()
                 for i, url in enumerate(urls):
