@@ -49,7 +49,7 @@ def _import_handler(base, name, path):
     return module
 
 
-def _register_dispatchers(bot, module):
+def _register_dispatchers(bot, module, dep=None):
     registered = []
     for obj in vars(module).values():
         if (
@@ -58,7 +58,7 @@ def _register_dispatchers(bot, module):
             and obj is not DiscordCommandDispatcher
             and obj.command
         ):
-            instance = obj(bot)
+            instance = obj(bot, dep)
             command = commands.Command(
                 _make_callback(instance),
                 name=obj.command,
@@ -69,10 +69,11 @@ def _register_dispatchers(bot, module):
     return registered
 
 
-def load_plugins(bot, disabled_plugins=None, root=None):
+def load_plugins(bot, disabled_plugins=None, root=None, dep=None):
     """Discover and register plugins from PLUGIN_DIRS under root (default: repo root).
 
     disabled_plugins is a comma-separated string of plugin folder names to skip.
+    dep is the shared Dependency object handed to every dispatcher (see depend.py).
     Returns the list of loaded plugin names.
     """
     disabled = {p.strip() for p in (disabled_plugins or "").split(",") if p.strip()}
@@ -88,7 +89,7 @@ def load_plugins(bot, disabled_plugins=None, root=None):
                 print(f"Plugin '{name}' is disabled, skipping")
                 continue
             module = _import_handler(base, name, handler_path)
-            names = _register_dispatchers(bot, module)
+            names = _register_dispatchers(bot, module, dep)
             print(f"Loaded plugin '{name}' (commands: {', '.join(names) or 'none'})")
             loaded.append(name)
     return loaded

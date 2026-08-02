@@ -4,6 +4,7 @@ from discord.ext import commands
 from botcmd.errors import register_error_handler
 from botcmd.loader import load_plugins
 from config import load_config
+from depend import Dependency
 
 
 def main():
@@ -24,8 +25,9 @@ def main():
     # 커맨드 실패 시 채널에 에러를 알림
     register_error_handler(bot)
 
-    # 플러그인 로드 및 커맨드 등록
-    loaded = load_plugins(bot, config.DISABLED_PLUGINS)
+    # 플러그인 로드 및 커맨드 등록 (공용 의존성 주입)
+    dep = Dependency(config)
+    loaded = load_plugins(bot, config.DISABLED_PLUGINS, dep=dep)
     print(f"Loaded plugins ({len(loaded)}): {', '.join(loaded) or 'none'}")
 
     print("Starting bot...")

@@ -1,0 +1,35 @@
+from config import Config
+from depend import Dependency
+from utils.web import Web
+from utils.webproxy import WebProxy
+
+
+def make_config(proxy_host=None, proxy_port=None):
+    return Config(
+        DISCORD_API_TOKEN="token",
+        DISABLED_PLUGINS=None,
+        PROXY_HOST=proxy_host,
+        PROXY_PORT=proxy_port,
+        DOWNLOAD_FOLDER="downloads",
+    )
+
+
+def test_web_is_always_available():
+    dep = Dependency(make_config())
+    assert isinstance(dep.web, Web)
+
+
+def test_webproxy_absent_without_proxy_host():
+    dep = Dependency(make_config())
+    assert dep.webproxy is None
+
+
+def test_webproxy_created_with_proxy_host():
+    dep = Dependency(make_config(proxy_host="dpi.local", proxy_port="8080"))
+    assert isinstance(dep.webproxy, WebProxy)
+    assert dep.webproxy._proxy == "http://dpi.local:8080"
+
+
+def test_config_is_exposed():
+    config = make_config()
+    assert Dependency(config).config is config

@@ -5,7 +5,10 @@ class DiscordCommandDispatcher:
         command: the command name, invoked as `!<command>`
         channel: channel names the command is allowed in (empty = all channels)
 
-    The bot instance is available as `self.bot` inside the handler.
+    The bot instance is available as `self.bot` inside the handler, and shared
+    dependencies (see depend.py) as `self.dep` — e.g. `self.dep.web` for web
+    requests, `self.dep.webproxy` for proxied ones (None unless PROXY_HOST is
+    configured), and `self.dep.config` for the app config.
 
     Declare the handler as `async def handler(self, ctx, *args)` to receive the
     command arguments (space-split, quoted strings kept together), e.g.
@@ -16,8 +19,9 @@ class DiscordCommandDispatcher:
     command: str = ""
     channel: list[str] = []
 
-    def __init__(self, bot):
+    def __init__(self, bot, dep=None):
         self.bot = bot
+        self.dep = dep
 
     async def handler(self, ctx, *args):
         raise NotImplementedError

@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 class Config:
     DISCORD_API_TOKEN: str
     DISABLED_PLUGINS: str
+    PROXY_HOST: str
+    PROXY_PORT: str
+    DOWNLOAD_FOLDER: str
 
 
 def _loadenv(name: str, required: bool = False):
@@ -22,4 +25,7 @@ def load_config():
     return Config(
         DISCORD_API_TOKEN=_loadenv("DISCORD_API_TOKEN", True),
         DISABLED_PLUGINS=_loadenv("DISABLED_PLUGINS"),
+        PROXY_HOST=_loadenv("PROXY_HOST"),
+        PROXY_PORT=_loadenv("PROXY_PORT"),
+        DOWNLOAD_FOLDER=_loadenv("DOWNLOAD_FOLDER") or "downloads",
     )

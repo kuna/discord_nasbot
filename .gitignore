@@ -10,3 +10,6 @@ __pycache__
 # private plugins
 plugins_priv/
 
+
+# ex_downloader output
+downloads/

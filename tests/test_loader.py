@@ -145,6 +145,33 @@ def test_handler_without_var_args_keeps_plain_signature(tmp_path):
     assert not any(p.kind is p.VAR_POSITIONAL for p in params.values())
 
 
+DEP_PLUGIN = """
+from botcmd.dispatcher import DiscordCommandDispatcher
+
+
+class Dispatcher(DiscordCommandDispatcher):
+    command = "show_dep"
+
+    async def handler(self, ctx):
+        await ctx.send(self.dep)
+"""
+
+
+@pytest.mark.asyncio
+async def test_dep_is_passed_to_dispatchers(tmp_path):
+    plugin_dir = tmp_path / "plugins" / "show_dep"
+    plugin_dir.mkdir(parents=True)
+    (plugin_dir / "handler.py").write_text(DEP_PLUGIN)
+
+    bot = make_bot()
+    load_plugins(bot, root=tmp_path, dep="the-shared-dep")
+
+    sent = []
+    ctx = SimpleNamespace(send=lambda msg: _record(sent, msg))
+    await bot.get_command("show_dep").callback(ctx)
+    assert sent == ["the-shared-dep"]
+
+
 @pytest.mark.asyncio
 async def test_channel_check():
     ctx_in_bot = SimpleNamespace(channel=SimpleNamespace(name="bot"))

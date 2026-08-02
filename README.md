@@ -57,6 +57,24 @@ class EchoDispatcher(DiscordCommandDispatcher):
 
 A handler declared as `async def handler(self, ctx)` simply ignores any arguments.
 
+### Using dependencies
+
+Every dispatcher receives the shared dependencies from `depend.py` as `self.dep`:
+
+* `self.dep.web` — web accessor with `read(url)`, `download(path, url)`, `archive(path, urls)`
+* `self.dep.webproxy` — same interface, but routed through the DPI proxy; `None` unless
+  `PROXY_HOST` (and optionally `PROXY_PORT`) is set in `.env`
+* `self.dep.config` — the app config
+
+Working examples:
+
+* `plugins/ex_downloader` — `!ex_download <url> [filename|stdout]` downloads a file
+  (or shows its content with `stdout`)
+* `plugins/ex_proxy_downloader` — `!ex_proxy_download <url> [filename|stdout]`, same
+  but through the DPI proxy (fails if `PROXY_HOST` is not configured)
+* `plugins/plugin_downloader` — `!plugin_download <name> <handler.py url>` installs a
+  plugin's `handler.py` from a URL
+
 ### Add a private plugin
 
 For putting a private plugin, put the plugin under `plugins_priv/` folder. This won't be tracked by git.
