@@ -15,6 +15,20 @@ uv run python main.py
 
 In the discord channel, say `!ping`, then the bot will respond.
 
+### Example usage
+
+This solution could be used with NAS after linking with it, e.g. NFS
+```sh
+mount -t nfs <addr>:/ /mnt/nas
+```
+
+Then you can make some integration scripts triggered by Discord NAS Bot like ...
+* Reorganizing files
+* Print file status
+* Download some files from given arguments
+
+etc ...
+
 ## Deploy with Docker
 
 The image bundles [SpoofDPI](https://github.com/xvzc/SpoofDPI) as a local proxy, so
