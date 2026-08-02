@@ -1,6 +1,6 @@
-import traceback
-
 from discord.ext import commands
+
+from botcmd.logs import logger
 
 
 def register_error_handler(bot):
@@ -21,10 +21,10 @@ def register_error_handler(bot):
             return
 
         original = getattr(error, "original", error)
-        traceback.print_exception(type(original), original, original.__traceback__)
+        logger.error("!%s failed", ctx.invoked_with, exc_info=original)
         try:
             await ctx.send(f"⚠️ `!{ctx.invoked_with}` failed: {original}")
         except Exception:
-            print(f"Could not report the '{ctx.invoked_with}' failure to the channel")
+            logger.warning("Could not report the '%s' failure to the channel", ctx.invoked_with)
 
     return on_command_error

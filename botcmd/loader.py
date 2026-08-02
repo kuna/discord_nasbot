@@ -6,6 +6,7 @@ from pathlib import Path
 from discord.ext import commands
 
 from botcmd.dispatcher import DiscordCommandDispatcher
+from botcmd.logs import logger
 
 PLUGIN_DIRS = ["plugins", "plugins_priv"]
 
@@ -86,10 +87,10 @@ def load_plugins(bot, disabled_plugins=None, root=None, dep=None):
         for handler_path in sorted(base_dir.glob("*/handler.py")):
             name = handler_path.parent.name
             if name in disabled:
-                print(f"Plugin '{name}' is disabled, skipping")
+                logger.info("Plugin '%s' is disabled, skipping", name)
                 continue
             module = _import_handler(base, name, handler_path)
             names = _register_dispatchers(bot, module, dep)
-            print(f"Loaded plugin '{name}' (commands: {', '.join(names) or 'none'})")
+            logger.info("Loaded plugin '%s' (commands: %s)", name, ", ".join(names) or "none")
             loaded.append(name)
     return loaded

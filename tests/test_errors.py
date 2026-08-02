@@ -1,3 +1,4 @@
+import logging
 from types import SimpleNamespace
 
 import discord
@@ -18,16 +19,18 @@ def make_ctx(sent, invoked_with="cmd"):
     return SimpleNamespace(send=send, invoked_with=invoked_with)
 
 
-async def test_command_failure_is_reported_to_channel(capsys):
+async def test_command_failure_is_reported_to_channel(caplog):
     handler = make_handler()
     sent = []
 
     error = commands.CommandInvokeError(RuntimeError("boom"))
-    await handler(make_ctx(sent, invoked_with="echo"), error)
+    with caplog.at_level(logging.ERROR, logger="nasbot"):
+        await handler(make_ctx(sent, invoked_with="echo"), error)
 
     assert sent == ["⚠️ `!echo` failed: boom"]
-    # the traceback is still printed for server-side logs
-    assert "RuntimeError: boom" in capsys.readouterr().err
+    # the original exception is still logged for server-side debugging
+    assert "!echo failed" in caplog.text
+    assert any(r.exc_info and isinstance(r.exc_info[1], RuntimeError) for r in caplog.records)
 
 
 async def test_unknown_command_is_silent():
@@ -48,7 +51,7 @@ async def test_channel_check_failure_is_silent():
     assert sent == []
 
 
-async def test_send_failure_does_not_propagate(capsys):
+async def test_send_failure_does_not_propagate(caplog):
     handler = make_handler()
 
     async def broken_send(msg):
@@ -58,5 +61,6 @@ async def test_send_failure_does_not_propagate(capsys):
     error = commands.CommandInvokeError(RuntimeError("boom"))
 
     # must not raise even when reporting to the channel fails
-    await handler(ctx, error)
-    assert "Could not report" in capsys.readouterr().out
+    with caplog.at_level(logging.WARNING, logger="nasbot"):
+        await handler(ctx, error)
+    assert "Could not report" in caplog.text
