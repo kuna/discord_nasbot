@@ -1,7 +1,7 @@
-Discord bot
+Discord NAS Bot
 ===========
 
-A discord bot for personal use.
+A discord bot for personal use (NAS bot)
 
 ## How to use
 
