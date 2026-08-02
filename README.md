@@ -5,7 +5,13 @@ A discord bot for personal use.
 
 ## How to use
 
-Provide necessary tokens from `.env.template`, invite your bot in the discord server, then turn on the script.
+Provide necessary tokens from `.env.template`, invite your bot in the discord server, then turn on the script as follows:
+
+```
+# Run uv sync --frozen if package is not yet initialized
+
+uv run python main.py
+```
 
 In the discord channel, say `!ping`, then the bot will respond.
 
@@ -17,18 +23,21 @@ This discord bot is extensible with plugins. Below is the usage.
 
 Put a python file `handler.py` under `plugins/` folder like below:
 ```py
-# example: plugins/downloader/handler.py
-# Below bot will triggered with `!ping` command, only under `bot` channel.
+# example: plugins/ping/handler.py
+# Below bot will be triggered with `!ping` command, only under `bot` channel.
 
-from cmd.dispatcher import DiscordCommandDispatcher
+from botcmd.dispatcher import DiscordCommandDispatcher
+
 
 class PingDispatcher(DiscordCommandDispatcher):
     command = "ping"
     channel = ["bot"]
 
-    def handler(ctx):
-        await ctx.send(f'🏓 Pong! {round(bot.latency * 1000)}ms')
+    async def handler(self, ctx):
+        await ctx.send(f"🏓 Pong! {round(self.bot.latency * 1000)}ms")
 ```
+
+Leave `channel` unset to allow the command in every channel.
 
 ### Add a private plugin
 
@@ -40,7 +49,15 @@ Just putting a plugin will be fine.
 
 ### Disabling a plugin
 
-Add a environment variable `DISABLE_PLUGINS=` in `.env` file like following:
+Add a environment variable `DISABLED_PLUGINS=` in `.env` file like following:
 ```
-DISABLE_PLUGINS=bot,downloader
+DISABLED_PLUGINS=bot,downloader
+```
+
+## Development
+
+Lint and format with [ruff](https://docs.astral.sh/ruff/):
+```
+uv run ruff check .
+uv run ruff format .
 ```

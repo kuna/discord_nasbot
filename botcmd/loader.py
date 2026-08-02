@@ -1,0 +1,80 @@
+import importlib.util
+import inspect
+import sys
+from pathlib import Path
+
+from discord.ext import commands
+
+from botcmd.dispatcher import DiscordCommandDispatcher
+
+PLUGIN_DIRS = ["plugins", "plugins_priv"]
+
+
+def _make_channel_check(channels):
+    async def predicate(ctx):
+        return not channels or ctx.channel.name in channels
+
+    return predicate
+
+
+def _make_callback(instance):
+    # discord.py rejects bound methods as command callbacks, so wrap in a plain function
+    async def callback(ctx):
+        await instance.handler(ctx)
+
+    callback.__doc__ = instance.handler.__doc__
+    return callback
+
+
+def _import_handler(base, name, path):
+    module_name = f"{base}.{name}.handler"
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _register_dispatchers(bot, module):
+    registered = []
+    for obj in vars(module).values():
+        if (
+            inspect.isclass(obj)
+            and issubclass(obj, DiscordCommandDispatcher)
+            and obj is not DiscordCommandDispatcher
+            and obj.command
+        ):
+            instance = obj(bot)
+            command = commands.Command(
+                _make_callback(instance),
+                name=obj.command,
+                checks=[_make_channel_check(obj.channel)],
+            )
+            bot.add_command(command)
+            registered.append(obj.command)
+    return registered
+
+
+def load_plugins(bot, disabled_plugins=None):
+    """Discover and register plugins from PLUGIN_DIRS.
+
+    disabled_plugins is a comma-separated string of plugin folder names to skip.
+    Returns the list of loaded plugin names.
+    """
+    disabled = {p.strip() for p in (disabled_plugins or "").split(",") if p.strip()}
+    root = Path(__file__).resolve().parent.parent
+    loaded = []
+    for base in PLUGIN_DIRS:
+        base_dir = root / base
+        if not base_dir.is_dir():
+            continue
+        for handler_path in sorted(base_dir.glob("*/handler.py")):
+            name = handler_path.parent.name
+            if name in disabled:
+                print(f"Plugin '{name}' is disabled, skipping")
+                continue
+            module = _import_handler(base, name, handler_path)
+            names = _register_dispatchers(bot, module)
+            print(f"Loaded plugin '{name}' (commands: {', '.join(names) or 'none'})")
+            loaded.append(name)
+    return loaded
