@@ -4,6 +4,11 @@ class DiscordCommandDispatcher:
     Subclass this in a plugin's handler.py and set:
         command: the command name, invoked as `!<command>`
         channel: channel names the command is allowed in (empty = all channels)
+        cron: 5-field cron expression to also run the plugin on a schedule,
+              e.g. "*/10 * * * *". Scheduled output goes to the first channel
+              named in `channel`; with none set it is logged instead.
+
+    A plugin may set `cron` without `command` to be schedule-only.
 
     The bot instance is available as `self.bot` inside the handler, and shared
     dependencies (see depend.py) as `self.dep` — e.g. `self.dep.web` for web
@@ -18,6 +23,7 @@ class DiscordCommandDispatcher:
 
     command: str = ""
     channel: list[str] = []
+    cron: str = ""
 
     def __init__(self, bot, dep=None):
         self.bot = bot
@@ -25,3 +31,8 @@ class DiscordCommandDispatcher:
 
     async def handler(self, ctx, *args):
         raise NotImplementedError
+
+    async def scheduled(self, ctx):
+        """Called when `cron` fires. Runs the handler with no arguments by
+        default; override for behaviour specific to scheduled runs."""
+        await self.handler(ctx)

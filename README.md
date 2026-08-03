@@ -109,6 +109,40 @@ class EchoDispatcher(DiscordCommandDispatcher):
 
 A handler declared as `async def handler(self, ctx)` simply ignores any arguments.
 
+### Run a plugin on a schedule
+
+Set a 5-field `cron` expression as a class field and the plugin also runs by itself:
+```py
+# example: plugins/ex_cron/handler.py
+# runs every 30 minutes, and on demand with `!ex_heartbeat`
+
+from datetime import datetime
+
+from botcmd.dispatcher import DiscordCommandDispatcher
+
+
+class ExCronDispatcher(DiscordCommandDispatcher):
+    command = "ex_heartbeat"
+    cron = "*/30 * * * *"
+    channel = ["bot"]
+
+    async def handler(self, ctx):
+        now = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+        await ctx.send(f"💓 alive at {now}")
+```
+
+Notes:
+
+* `command` is optional — a plugin with only `cron` is schedule-only.
+* A scheduled run has no invoking message, so `ctx.send` posts to the first channel
+  named in `channel`. With `channel` unset there is nowhere to post and the output is
+  logged instead.
+* Scheduled runs call `handler(ctx)` with no arguments. Override
+  `async def scheduled(self, ctx)` for behaviour specific to scheduled runs.
+* A failing run is logged and the schedule continues; an invalid expression is
+  reported at startup and only that schedule is skipped.
+* Times follow the machine's local timezone — containers are UTC unless you set `TZ`.
+
 ### Using dependencies
 
 Every dispatcher receives the shared dependencies from `depend.py` as `self.dep`:

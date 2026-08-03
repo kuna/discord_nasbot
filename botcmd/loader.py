@@ -50,16 +50,22 @@ def _import_handler(base, name, path):
     return module
 
 
-def _register_dispatchers(bot, module, dep=None):
+def _is_dispatcher(obj):
+    return (
+        inspect.isclass(obj)
+        and issubclass(obj, DiscordCommandDispatcher)
+        and obj is not DiscordCommandDispatcher
+        and (obj.command or obj.cron)
+    )
+
+
+def _register_dispatchers(bot, module, dep=None, scheduler=None):
     registered = []
     for obj in vars(module).values():
-        if (
-            inspect.isclass(obj)
-            and issubclass(obj, DiscordCommandDispatcher)
-            and obj is not DiscordCommandDispatcher
-            and obj.command
-        ):
-            instance = obj(bot, dep)
+        if not _is_dispatcher(obj):
+            continue
+        instance = obj(bot, dep)
+        if obj.command:
             command = commands.Command(
                 _make_callback(instance),
                 name=obj.command,
@@ -67,14 +73,24 @@ def _register_dispatchers(bot, module, dep=None):
             )
             bot.add_command(command)
             registered.append(obj.command)
+        if obj.cron:
+            if scheduler is None:
+                logger.warning(
+                    "Plugin class '%s' declares cron %r but no scheduler is available",
+                    obj.__name__,
+                    obj.cron,
+                )
+            elif scheduler.add(instance):
+                registered.append(f"cron:{obj.cron}")
     return registered
 
 
-def load_plugins(bot, disabled_plugins=None, root=None, dep=None):
+def load_plugins(bot, disabled_plugins=None, root=None, dep=None, scheduler=None):
     """Discover and register plugins from PLUGIN_DIRS under root (default: repo root).
 
     disabled_plugins is a comma-separated string of plugin folder names to skip.
     dep is the shared Dependency object handed to every dispatcher (see depend.py).
+    scheduler collects dispatchers that declare a cron expression.
     Returns the list of loaded plugin names.
     """
     disabled = {p.strip() for p in (disabled_plugins or "").split(",") if p.strip()}
@@ -90,7 +106,7 @@ def load_plugins(bot, disabled_plugins=None, root=None, dep=None):
                 logger.info("Plugin '%s' is disabled, skipping", name)
                 continue
             module = _import_handler(base, name, handler_path)
-            names = _register_dispatchers(bot, module, dep)
+            names = _register_dispatchers(bot, module, dep, scheduler)
             logger.info("Loaded plugin '%s' (commands: %s)", name, ", ".join(names) or "none")
             loaded.append(name)
     return loaded

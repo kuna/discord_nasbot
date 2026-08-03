@@ -1,3 +1,4 @@
+import logging
 from types import SimpleNamespace
 
 import discord
@@ -170,6 +171,97 @@ async def test_dep_is_passed_to_dispatchers(tmp_path):
     ctx = SimpleNamespace(send=lambda msg: _record(sent, msg))
     await bot.get_command("show_dep").callback(ctx)
     assert sent == ["the-shared-dep"]
+
+
+CRON_ONLY_PLUGIN = """
+from botcmd.dispatcher import DiscordCommandDispatcher
+
+
+class Dispatcher(DiscordCommandDispatcher):
+    cron = "*/5 * * * *"
+    channel = ["bot"]
+
+    async def handler(self, ctx, *args):
+        await ctx.send("tick")
+"""
+
+CRON_AND_COMMAND_PLUGIN = """
+from botcmd.dispatcher import DiscordCommandDispatcher
+
+
+class Dispatcher(DiscordCommandDispatcher):
+    command = "beat"
+    cron = "0 * * * *"
+
+    async def handler(self, ctx, *args):
+        await ctx.send("beat")
+"""
+
+
+class FakeScheduler:
+    def __init__(self):
+        self.added = []
+
+    def add(self, dispatcher):
+        self.added.append(dispatcher)
+        return True
+
+
+def write_plugin(root, name, source, base="plugins"):
+    plugin_dir = root / base / name
+    plugin_dir.mkdir(parents=True)
+    (plugin_dir / "handler.py").write_text(source)
+
+
+def test_cron_only_plugin_is_scheduled_not_registered(tmp_path):
+    write_plugin(tmp_path, "ticker", CRON_ONLY_PLUGIN)
+    bot, scheduler = make_bot(), FakeScheduler()
+
+    loaded = load_plugins(bot, root=tmp_path, scheduler=scheduler)
+
+    assert loaded == ["ticker"]
+    assert len(scheduler.added) == 1
+    assert scheduler.added[0].cron == "*/5 * * * *"
+    # no command name, so nothing to invoke with ! (only discord.py's own help)
+    assert {c.name for c in bot.commands} == {"help"}
+
+
+def test_plugin_can_have_both_command_and_cron(tmp_path):
+    write_plugin(tmp_path, "beater", CRON_AND_COMMAND_PLUGIN)
+    bot, scheduler = make_bot(), FakeScheduler()
+
+    load_plugins(bot, root=tmp_path, scheduler=scheduler)
+
+    assert bot.get_command("beat") is not None
+    assert len(scheduler.added) == 1
+
+
+def test_dispatchers_get_dep_when_scheduled(tmp_path):
+    write_plugin(tmp_path, "ticker", CRON_ONLY_PLUGIN)
+    scheduler = FakeScheduler()
+
+    load_plugins(make_bot(), root=tmp_path, dep="the-dep", scheduler=scheduler)
+
+    assert scheduler.added[0].dep == "the-dep"
+
+
+def test_cron_plugin_without_scheduler_warns(tmp_path, caplog):
+    write_plugin(tmp_path, "ticker", CRON_ONLY_PLUGIN)
+
+    with caplog.at_level(logging.WARNING, logger="nasbot"):
+        loaded = load_plugins(make_bot(), root=tmp_path)
+
+    assert loaded == ["ticker"]
+    assert "no scheduler is available" in caplog.text
+
+
+def test_disabled_cron_plugin_is_not_scheduled(tmp_path):
+    write_plugin(tmp_path, "ticker", CRON_ONLY_PLUGIN)
+    scheduler = FakeScheduler()
+
+    load_plugins(make_bot(), disabled_plugins="ticker", root=tmp_path, scheduler=scheduler)
+
+    assert scheduler.added == []
 
 
 @pytest.mark.asyncio
