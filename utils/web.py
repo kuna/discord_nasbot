@@ -3,10 +3,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import aiohttp
+from bs4 import BeautifulSoup
 
 from utils.doh import DoHResolver
 
 CHUNK_SIZE = 1 << 16
+# lxml is lenient with malformed markup and much faster than html.parser
+DEFAULT_HTML_PARSER = "lxml"
 
 # Sent instead of aiohttp's "Python/3.x aiohttp/3.y" User-Agent, which plenty of
 # sites reject outright. This is what a desktop Chrome sends when you open a URL.
@@ -70,6 +73,16 @@ class Web:
             async with session.get(url, proxy=self._proxy) as resp:
                 resp.raise_for_status()
                 return await resp.text()
+
+    async def read_html(self, url, parser=DEFAULT_HTML_PARSER):
+        """Fetch url and return it as a BeautifulSoup document.
+
+        Supports the usual soup API, e.g.
+            soup = await dep.web.read_html(url)
+            soup.title.string
+            [a["href"] for a in soup.select("a[href]")]
+        """
+        return BeautifulSoup(await self.read(url), parser)
 
     async def download(self, path, url):
         """Download url into the file at path (parent dirs are created). Returns the Path."""

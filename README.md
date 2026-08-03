@@ -147,10 +147,21 @@ Notes:
 
 Every dispatcher receives the shared dependencies from `depend.py` as `self.dep`:
 
-* `self.dep.web` — web accessor with `read(url)`, `download(path, url)`, `archive(path, urls)`
+* `self.dep.web` — web accessor with `read(url)`, `read_html(url)`, `download(path, url)`,
+  `archive(path, urls)`
 * `self.dep.webproxy` — same interface, but routed through the DPI proxy; `None` unless
   `PROXY_HOST` (and optionally `PROXY_PORT`) is set in `.env`
 * `self.dep.config` — the app config
+
+`read_html(url)` returns a [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/)
+document parsed with lxml, so plugins can scrape without importing a parser themselves:
+```py
+soup = await self.dep.web.read_html(url)
+title = soup.title.get_text(strip=True)
+links = [a["href"] for a in soup.select("a[href]")]
+```
+See `plugins/ex_scraper` (`!ex_scrape <url>`) for a working example. Pass
+`parser="html.parser"` to use the stdlib parser instead of lxml.
 
 Both send desktop-Chrome request headers (`utils.web.BROWSER_HEADERS`) instead of
 aiohttp's default `Python/3.x aiohttp/3.y` User-Agent, so sites don't reject them as a

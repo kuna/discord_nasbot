@@ -14,7 +14,7 @@ def make_ctx(sent):
 
 def test_declares_a_cron_schedule():
     # Not now; we're disabling it but leave the code as an cron example
-    #assert handler.ExCronDispatcher.cron == "*/30 * * * *"
+    # assert handler.ExCronDispatcher.cron == "*/30 * * * *"
     assert handler.ExCronDispatcher.channel == ["bot"]
 
 

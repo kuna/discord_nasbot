@@ -27,6 +27,28 @@ async def server():
     await server.close()
 
 
+@pytest.fixture
+async def html_server():
+    app = aioweb.Application()
+    received = []
+    pages = {
+        "page": "<html><head><title> Example </title></head><body>"
+        "<a href='/a'>a</a><a href='/b'>b</a></body></html>",
+        "broken": "<html><body><p>unclosed<div><span>",
+    }
+
+    async def endpoint(request):
+        received.append(dict(request.headers))
+        return aioweb.Response(text=pages[request.match_info["name"]], content_type="text/html")
+
+    app.router.add_get("/{name}", endpoint)
+    server = TestServer(app)
+    await server.start_server()
+    server.received_headers = received
+    yield server
+    await server.close()
+
+
 async def test_read(server):
     web = Web()
     assert await web.read(str(server.make_url("/hello.txt"))) == "content of hello.txt"
@@ -75,6 +97,32 @@ def test_webproxy_builds_proxy_url():
 
 def test_plain_web_has_no_proxy():
     assert Web()._proxy is None
+
+
+async def test_read_html_returns_a_soup(html_server):
+    soup = await Web().read_html(str(html_server.make_url("/page")))
+
+    assert soup.title.get_text(strip=True) == "Example"
+    assert [a["href"] for a in soup.select("a[href]")] == ["/a", "/b"]
+
+
+async def test_read_html_repairs_malformed_markup(html_server):
+    """lxml closes the unclosed tags that html.parser would leave broken."""
+    soup = await Web().read_html(str(html_server.make_url("/broken")))
+
+    assert soup.select_one("p").get_text(strip=True) == "unclosed"
+
+
+async def test_read_html_accepts_another_parser(html_server):
+    soup = await Web().read_html(str(html_server.make_url("/page")), parser="html.parser")
+
+    assert soup.title.get_text(strip=True) == "Example"
+
+
+async def test_read_html_sends_browser_headers(html_server):
+    await Web().read_html(str(html_server.make_url("/page")))
+
+    assert html_server.received_headers[0]["User-Agent"] == BROWSER_HEADERS["User-Agent"]
 
 
 async def test_read_sends_browser_headers(server):

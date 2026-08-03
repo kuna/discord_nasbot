@@ -7,7 +7,7 @@ class ExCronDispatcher(DiscordCommandDispatcher):
     """Runs every 30 minutes, and on demand with `!ex_heartbeat`."""
 
     command = "ex_heartbeat"
-    #cron = "*/30 * * * *"
+    # cron = "*/30 * * * *"
     # scheduled output goes to the first of these channels that exists
     channel = ["bot"]
 

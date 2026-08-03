@@ -1,4 +1,4 @@
-# caches
+ caches
 __pycache__
 
 # temp files
@@ -10,6 +10,9 @@ __pycache__
 # private plugins
 plugins_priv/
 
+# plugin outputs (configs)
+configs/*
+!configs/README.md
 
-# ex_downloader output
+# plugin outputs (downloads)
 downloads/
