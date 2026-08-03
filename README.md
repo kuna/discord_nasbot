@@ -15,6 +15,10 @@ uv run python main.py
 
 In the discord channel, say `!ping`, then the bot will respond.
 
+Say `!bot` to list every usable command (with its channel restriction and description)
+and every active cron schedule with its next run time. This one is built in rather than
+a plugin, since it needs the scheduler that plugins are not given.
+
 ### Example usage
 
 This solution could be used with NAS after linking with it, e.g. NFS

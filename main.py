@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+from botcmd.builtin import register_bot_command
 from botcmd.errors import register_error_handler
 from botcmd.loader import load_plugins
 from botcmd.logs import logger, register_command_logger, setup_logging
@@ -35,6 +36,9 @@ def main():
     # 플러그인 로드 및 커맨드 등록 (공용 의존성 주입)
     dep = Dependency(config)
     _ = load_plugins(bot, config.DISABLED_PLUGINS, dep=dep, scheduler=scheduler)
+
+    # 기본 제공 커맨드 (!bot): 커맨드/크론 목록
+    register_bot_command(bot, scheduler)
 
     logger.info("Starting bot...")
     try:

@@ -59,7 +59,7 @@ def _is_dispatcher(obj):
     )
 
 
-def _register_dispatchers(bot, module, dep=None, scheduler=None):
+def _register_dispatchers(bot, module, dep=None, scheduler=None, plugin_name=""):
     registered = []
     for obj in vars(module).values():
         if not _is_dispatcher(obj):
@@ -70,10 +70,13 @@ def _register_dispatchers(bot, module, dep=None, scheduler=None):
                 _make_callback(instance),
                 name=obj.command,
                 checks=[_make_channel_check(obj.channel)],
+                # metadata for the built-in !bot listing
+                extras={"plugin": plugin_name, "channels": list(obj.channel)},
             )
             bot.add_command(command)
             registered.append(obj.command)
         if obj.cron:
+            instance.plugin_name = plugin_name
             if scheduler is None:
                 logger.warning(
                     "Plugin class '%s' declares cron %r but no scheduler is available",
@@ -106,7 +109,7 @@ def load_plugins(bot, disabled_plugins=None, root=None, dep=None, scheduler=None
                 logger.info("Plugin '%s' is disabled, skipping", name)
                 continue
             module = _import_handler(base, name, handler_path)
-            names = _register_dispatchers(bot, module, dep, scheduler)
+            names = _register_dispatchers(bot, module, dep, scheduler, plugin_name=name)
             logger.info("Loaded plugin '%s' (commands: %s)", name, ", ".join(names) or "none")
             loaded.append(name)
     return loaded

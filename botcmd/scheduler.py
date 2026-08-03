@@ -67,6 +67,10 @@ class CronScheduler:
     def scheduled(self):
         return list(self._dispatchers)
 
+    @property
+    def running(self):
+        return bool(self._tasks)
+
     def start(self):
         """Start one loop per dispatcher. Safe to call again (e.g. on reconnect)."""
         if self._tasks:
