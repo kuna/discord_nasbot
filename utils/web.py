@@ -74,6 +74,13 @@ class Web:
                 resp.raise_for_status()
                 return await resp.text()
 
+    async def read_binary(self, url):
+        """Return the response body of url as binary."""
+        async with self._session() as session:
+            async with session.get(url, proxy=self._proxy) as resp:
+                resp.raise_for_status()
+                return await resp.read()
+
     async def read_html(self, url, parser=DEFAULT_HTML_PARSER):
         """Fetch url and return it as a BeautifulSoup document.
 
