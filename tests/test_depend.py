@@ -13,6 +13,7 @@ def make_config(proxy_host=None, proxy_port=None, doh_url=DEFAULT_DOH_URL):
         PROXY_PORT=proxy_port,
         DOWNLOAD_FOLDER="downloads",
         DOH_URL=doh_url,
+        TEST_CLI_MODE=False,
     )
 
 

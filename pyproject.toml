@@ -44,5 +44,9 @@ select = [
     "UP", # pyupgrade
 ]
 
+[tool.ruff.lint.per-file-ignores]
+# embeds javascript verbatim, so its lines are not ours to rewrap
+"tests/test_js.py" = ["E501"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["botcmd", "config"]

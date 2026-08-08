@@ -15,6 +15,31 @@ uv run python main.py
 
 In the discord channel, say `!ping`, then the bot will respond.
 
+### Test without discord
+
+Set `TEST_CLI_MODE=1` to load the plugins and drive them from stdin instead of
+connecting to discord — no token needed:
+
+```
+make cli
+```
+```
+> !echo hello
+You typed "hello"
+> /channel general     # simulate another channel (checks are enforced)
+> /cron ticker         # run a cron plugin right now
+> /status              # same listing as !bot
+> /quit                # Ctrl-D also works
+```
+
+The leading `!` is optional, quoting works as in discord, and a failing command
+prints the error instead of stopping the session. It also accepts piped input, which
+is handy for scripted checks:
+
+```
+echo '!ex_scrape https://example.com' | make cli
+```
+
 Say `!bot` to list every usable command (with its channel restriction and description)
 and every active cron schedule with its next run time. This one is built in rather than
 a plugin, since it needs the scheduler that plugins are not given.

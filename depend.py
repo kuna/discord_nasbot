@@ -14,3 +14,9 @@ class Dependency:
             if config.PROXY_HOST
             else None
         )
+
+    async def close(self):
+        """Release the web accessors' resolver sessions."""
+        await self.web.close()
+        if self.webproxy:
+            await self.webproxy.close()

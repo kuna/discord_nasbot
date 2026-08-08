@@ -61,8 +61,9 @@ def test_runtime_error_is_raised():
     with pytest.raises(dukpy.JSRuntimeError):
         runjs("nope.notAFunction()")
 
+
 def test_some_long_script():
-    long_script = """
+    long_script = r"""
 domain2 = "goa.com"
 
 gg = { m: function(g) {
@@ -87,15 +88,15 @@ function subdomain_from_url(url, base, dir) {
                         retval = 'a';
                 }
         }
-        
+
         var b = 16;
-        
+
         var r = /\/[0-9a-f]{61}([0-9a-f]{2})([0-9a-f])/;
         var m = r.exec(url);
         if (!m) {
                 return retval;
         }
-        
+
         var g = parseInt(m[2]+m[1], b);
         if (!isNaN(g)) {
                 if (base) {
@@ -104,7 +105,7 @@ function subdomain_from_url(url, base, dir) {
                         retval = retval + (1+gg.m(g));
                 }
         }
-        
+
         return retval;
 }
 
@@ -140,7 +141,10 @@ function url_from_url_from_hash(galleryid, image, dir, ext, base) {
         return url_from_url(url_from_hash(galleryid, image, dir, ext), base, dir);
 }
 """
-    prepare_script = "file={\"name\": \"04.jpg\", \"hash\": \"a2c0342a2617026fbaeed01130c826cc3f58242799894b3ecc1abfa811ede03f\"}"
-    main_script = "url_from_url_from_hash(\"4095257\", file, \"webp\")"
+    prepare_script = 'file={"name": "04.jpg", "hash": "a2c0342a2617026fbaeed01130c826cc3f58242799894b3ecc1abfa811ede03f"}'
+    main_script = 'url_from_url_from_hash("4095257", file, "webp")'
     val = runjs(f"{long_script}; {prepare_script}; return {main_script};")
-    assert val == "https://w1.goa.com/1785801601/3843/a2c0342a2617026fbaeed01130c826cc3f58242799894b3ecc1abfa811ede03f.webp"
+    assert (
+        val
+        == "https://w1.goa.com/1785801601/3843/a2c0342a2617026fbaeed01130c826cc3f58242799894b3ecc1abfa811ede03f.webp"
+    )
